@@ -14,7 +14,7 @@ from datetime import datetime
 from time import sleep, strftime, localtime
 from pandastable import Table, dialogs
 from importlib.resources import files
-from interfacce import Sorgente, Contatto, Gruppo, Messaggio
+from whafer.interfacce import Sorgente, Contatto, Gruppo, Messaggio
 from progetti import Progetto
 
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
