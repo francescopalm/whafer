@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Protocol
 from dataclasses import dataclass
 import sqlite3
-from costanti import TIPI_CONTATTI
+from whafer.costanti import TIPI_CONTATTI
 
 @dataclass
 class Contatto:

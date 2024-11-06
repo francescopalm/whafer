@@ -15,7 +15,7 @@ from time import sleep, strftime, localtime
 from pandastable import Table, dialogs
 from importlib.resources import files
 from whafer.interfacce import Sorgente, Contatto, Gruppo, Messaggio
-from progetti import Progetto
+from whafer.progetti import Progetto
 
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"

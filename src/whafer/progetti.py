@@ -4,8 +4,8 @@ import csv
 import hashlib
 import db
 import subprocess
-from integrita import costruisci_calcola_hash
-from interfacce import Sorgente, Gruppo, Contatto, Messaggio
+from whafer.integrita import costruisci_calcola_hash
+from whafer.interfacce import Sorgente, Gruppo, Contatto, Messaggio
 
 class Progetto:
     def __init__(self, path: str, sorgenti: list = None, encrypted: list = None):

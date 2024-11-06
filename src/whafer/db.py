@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
-from costanti import TIPI_CONTATTI, TIPI_PARTECIPANTI
-from interfacce import Contatto, Gruppo, Messaggio
+from whafer.costanti import TIPI_CONTATTI, TIPI_PARTECIPANTI
+from whafer.interfacce import Contatto, Gruppo, Messaggio
 import sqlite3
 
 class SorgenteDB():
