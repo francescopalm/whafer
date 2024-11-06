@@ -2,7 +2,7 @@ from pathlib import Path
 from shutil import copy2
 import csv
 import hashlib
-import db
+import whafer.db
 import subprocess
 from whafer.integrita import costruisci_calcola_hash
 from whafer.interfacce import Sorgente, Gruppo, Contatto, Messaggio
@@ -54,7 +54,7 @@ class Progetto:
                                 str(percorsoWa),
                                 str(self.percorso / "sorgenti" / "wa.db")])
 
-        self.sorgentefile = db.SorgenteDB(self.percorso / "sorgenti" / "msgstore.db")
+        self.sorgentefile = whafer.db.SorgenteDB(self.percorso / "sorgenti" / "msgstore.db")
 
         # Esegui gli hash
         funzione_hash = costruisci_calcola_hash(hashlib.sha256, hashlib.md5)
