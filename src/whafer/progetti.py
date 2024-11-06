@@ -54,7 +54,7 @@ class Progetto:
                                 str(percorsoWa),
                                 str(self.percorso / "sorgenti" / "wa.db")])
 
-        self.sorgentefile = whafer.db.SorgenteDB(self.percorso / "sorgenti" / "msgstore.db")
+        self.sorgentefile = db.SorgenteDB(self.percorso / "sorgenti" / "msgstore.db")
 
         # Esegui gli hash
         funzione_hash = costruisci_calcola_hash(hashlib.sha256, hashlib.md5)
