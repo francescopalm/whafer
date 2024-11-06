@@ -8,7 +8,7 @@ Python deve essere installato sul computer per installare e far partire WhaFeR.
 Per installarlo, da riga di comando eseguire:
 
 ```
-pip install git+https://github.com/Mikel12455/whafer.git
+pip install git+https://github.com/francescopalm/whafer.git
 ```
 
 ## Uso

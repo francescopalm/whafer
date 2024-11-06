@@ -2,6 +2,9 @@
 name = "WhaFeR"
 description = "WhaFeR - WhatsApp Forensic Reporter"
 version = "0.2.0"
+authors = [
+    {name = "Francesco Palmisano", email = "f.palmisano42@studenti.uniba.it"}
+]
 
 dependencies = [
     "customtkinter",
@@ -19,7 +22,7 @@ dev = [
 ]
 
 [project.scripts]
-whafer-gui2 = "whafer.main:main"
+whafer-gui = "whafer.main:main"
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
