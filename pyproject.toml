@@ -1,0 +1,33 @@
+[project]
+name = "Whafer"
+description = "WhaFeR - WHAtsapp Forensic Reporter"
+version = "0.1.0"
+
+dependencies = [
+    "customtkinter",
+    "Pillow",
+    "pandas",
+    "pandastable",
+    "SQLAlchemy",
+    "wa-crypt-tools",
+    "rfc3161ng"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest"
+]
+
+[project.scripts]
+whafer-gui = "whafer.gui:main"
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["src"]
+
+[tool.setuptools.package-data]
+"whafer.assets" = ["*.png"]
