@@ -19,7 +19,7 @@ dev = [
 ]
 
 [project.scripts]
-whafer-gui = "src.main:main"
+whafer-gui2 = "src.main:main"
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
