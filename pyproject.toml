@@ -1,7 +1,7 @@
 [project]
-name = "Whafer"
-description = "WhaFeR - WHAtsapp Forensic Reporter"
-version = "0.1.0"
+name = "WhaFeR"
+description = "WhaFeR - WhatsApp Forensic Reporter"
+version = "0.2.0"
 
 dependencies = [
     "customtkinter",
@@ -19,7 +19,7 @@ dev = [
 ]
 
 [project.scripts]
-whafer-gui = "whafer.gui:main"
+whafer-gui = "src.main:main"
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
