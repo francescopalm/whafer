@@ -14,12 +14,12 @@ from datetime import datetime
 from time import sleep, strftime, localtime
 from pandastable import Table, dialogs
 from importlib.resources import files
-from whafer.interfacce import Sorgente, Contatto, Gruppo, Messaggio
-from whafer.progetti import Progetto
+from interfacce import Sorgente, Contatto, Gruppo, Messaggio
+from progetti import Progetto
 
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
-genericUserImg = PIL.Image.open(files("whafer.assets").joinpath("generic-user-icon.png"))
+genericUserImg = PIL.Image.open(files("assets").joinpath("generic-user-icon.png"))
 
 class TagFrame(ctk.CTkFrame):
     def __init__(self, parent, intestazione: str, descrizione: str, testoPulsante: str, comando: callable):
@@ -379,7 +379,7 @@ class ContattiView(BaseView):
     def mostra_contatti(self):
         for widget in self.frameContatti.winfo_children():
             widget.destroy()
-        genericUserImg = PIL.Image.open(files("whafer.assets").joinpath("generic-user-icon.png"))
+        genericUserImg = PIL.Image.open(files("assets").joinpath("generic-user-icon.png"))
         for contatto in islice(self.contattiFiltrati, self.contattoCorrente, self.contattoCorrente+self.numContatti):
             self.frameContatti.contatto = TagFrame(self.frameContatti, 
                                                contatto.nome,
@@ -701,9 +701,9 @@ class Introduzione(ctk.CTkFrame):
         super().__init__(parent)
         
         #whaimage = ctk.CTkImage(PIL.Image.open(files("whafer.assets").joinpath("whatsapp.png")), size=(30, 30))
-        gdriveimage = ctk.CTkImage(PIL.Image.open(files("whafer.assets").joinpath("GoogleDrive.png")), size=(30, 30))
-        androidimage = ctk.CTkImage(PIL.Image.open(files("whafer.assets").joinpath("android.png")), size=(30, 30))
-        localimage = ctk.CTkImage(PIL.Image.open(files("whafer.assets").joinpath("search.png")), size=(30, 30))
+        gdriveimage = ctk.CTkImage(PIL.Image.open(files("assets").joinpath("GoogleDrive.png")), size=(30, 30))
+        androidimage = ctk.CTkImage(PIL.Image.open(files("assets").joinpath("android.png")), size=(30, 30))
+        localimage = ctk.CTkImage(PIL.Image.open(files("assets").joinpath("search.png")), size=(30, 30))
 
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
