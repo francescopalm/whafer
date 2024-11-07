@@ -579,7 +579,7 @@ class MediaView(BaseView):
         self.errorLabel.pack(anchor="w", padx=20, pady=30)
 
         if len(os.listdir(str(self.progetto.percorso / "media"))) == 0:
-            self.apriMedia.configure(state="disabled", fg_color="darkgrey")
+            self.apriMedia.configure(state="disabled", text_color_disabled="#636363", fg_color="darkgrey")
 
         
 
@@ -744,7 +744,7 @@ class Introduzione(ctk.CTkFrame):
         self.estrazioneFrameBottoni.grid(row=1, column=0, sticky="ns", padx=10, pady=10, ipadx=100)
 
         # bottone per caricare il progetto da Google Drive
-        self.pulsanteGoogleDrive = ctk.CTkButton(self.estrazioneFrameBottoni, state="disabled", text="Google Drive", image=gdriveimage, compound="left", font=ctk.CTkFont(size=15), anchor="w", fg_color="darkgrey", border_spacing=15)
+        self.pulsanteGoogleDrive = ctk.CTkButton(self.estrazioneFrameBottoni, state="disabled", text_color_disabled="#636363", text="Google Drive", image=gdriveimage, compound="left", font=ctk.CTkFont(size=15), anchor="w", fg_color="darkgrey", border_spacing=15)
         self.pulsanteGoogleDrive.pack(fill="x", pady=10)
 
         # bottone per caricare il progetto da un telefono android
