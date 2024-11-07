@@ -8,7 +8,6 @@ import sqlite3
 import subprocess
 import xml.etree.ElementTree as ET
 import os
-import shutil
 from pathlib import Path
 from datetime import datetime
 from time import sleep, strftime, localtime
@@ -886,11 +885,6 @@ class Introduzione(ctk.CTkFrame):
                 sorgenti = ['whafer_extractedfiles/msgstore.db', 'whafer_extractedfiles/wa.db', 'whafer_extractedfiles/com.whatsapp_preferences_light.xml', 'whafer_extractedfiles/startup_prefs.xml']
                 progetto = Progetto(percorsoProgetto, sorgenti=sorgenti)
                 self.master.main = Applicazione(self.master, progetto)
-
-                # Rimozione dei file temporanei estratti dallo smartphone
-                projectFolder = os.path.dirname(os.path.abspath(__file__))
-                #shutil.rmtree(projectFolder+"\whafer_extractedfiles")
-
                 self.destroy()
                 
         except Exception as e:
