@@ -889,7 +889,7 @@ class Introduzione(ctk.CTkFrame):
 
                 # Rimozione dei file temporanei estratti dallo smartphone
                 projectFolder = os.path.dirname(os.path.abspath(__file__))
-                shutil.rmtree(projectFolder+"\whafer_extractedfiles")
+                #shutil.rmtree(projectFolder+"\whafer_extractedfiles")
 
                 self.destroy()
                 
