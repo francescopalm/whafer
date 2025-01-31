@@ -23,6 +23,10 @@ class Sorgente(Protocol):
     def messaggi_raw(self)->list:
         pass
 
+    @property
+    def chat(self)->list[Chat]:
+        pass
+
 class Contatto(Protocol):
     _id: int
     numeroTelefonico: str
@@ -63,6 +67,11 @@ class Messaggio(Protocol):
     contenuto: str
     dataInvio: datetime
     dataRicezione: datetime
+    dataRicezioneServer: datetime
+    groupMessage: bool
+    status: int
+    sender: str
+    from_me: bool
 
     @property
     def mittente(self)->Contatto:
@@ -78,4 +87,14 @@ class Messaggio(Protocol):
 
     @property
     def lettoriMedia(self)->list[tuple[Contatto, datetime]]:
+        pass
+
+
+class Chat(Protocol):
+    _id: int
+    soggetto: str
+    user: str
+    
+    @property
+    def messaggi(self)->list[Messaggio]:
         pass
