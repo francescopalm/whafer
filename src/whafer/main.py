@@ -1126,9 +1126,9 @@ class Introduzione(ctk.CTkFrame):
                 progetto = Progetto(percorsoProgetto, sorgenti=sorgenti)
                 self.master.main = Applicazione(self.master, progetto)
 
-                # Rimozione dei file temporanei estratti dallo smartphone
-                projectFolder = os.path.dirname(os.path.abspath(__file__))
-                shutil.rmtree(projectFolder+"/whafer_extractedfiles")
+                # TODO: Rimozione dei file temporanei estratti dallo smartphone
+                #projectFolder = Path(__file__).resolve().parent.parent
+                #shutil.rmtree(projectFolder / "whafer_extractedfiles")
 
                 self.destroy()
                 
