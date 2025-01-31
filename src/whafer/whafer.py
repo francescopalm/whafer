@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Protocol
 from dataclasses import dataclass
 import sqlite3
-from whafer.costanti import TIPI_CONTATTI
+from costanti import TIPI_CONTATTI
 
 @dataclass
 class Contatto:
@@ -17,6 +17,13 @@ class Gruppo:
 @dataclass
 class Messaggio:
     id: int
+
+@dataclass
+class Chat:
+    id: int
+    soggetto: str
+    user: str
+
 
 class ContattoDBParser:
     def get_contatti(self, msgstore: sqlite3.Connection)->list[Contatto]:
@@ -67,7 +74,14 @@ class GruppoDBParser:
         return gruppi
     
 class ChatDBParser:
-    pass
+    def get_chat(self, msgstore: sqlite3.Connection)->list[Messaggio]:
+        cursore = msgstore.cursor()
+        cursore.execute("SELECT subject "
+                        "FROM chat "
+                        "WHERE hidden = 0")
+        chat = zip(*cursore.fetchall())        
+        chat_list = list(map(Chat, chat))
+        return chat_list
 
 class Media:
     percorso = str
@@ -95,12 +109,5 @@ class Contenuto:
     def add_media(self, media):
         self.media = media
     
-class Chat:
-    messaggi: list[Messaggio]
 
-    def __init__(self):
-        self.messaggi = list()
-
-    def add_messaggio(self, messaggio):
-        self.messaggi.append(messaggio)
 
