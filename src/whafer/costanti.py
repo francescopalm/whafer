@@ -9,3 +9,9 @@ TIPI_PARTECIPANTI = {
     "Amministratore": 1,
     "Creatore": 2
 }
+
+STATO_MESSAGGIO = {
+    "Inviato": 4,
+    "Consegnato": 5,
+    "Letto": 13
+}
