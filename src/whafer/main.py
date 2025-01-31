@@ -8,13 +8,19 @@ import sqlite3
 import subprocess
 import xml.etree.ElementTree as ET
 import os
+import shutil
+import numpy as np
+from reportlab.lib.pagesizes import landscape, A4, A1
+from reportlab.platypus import SimpleDocTemplate, Table as ReportLabTable, TableStyle
+from reportlab.lib import colors
 from pathlib import Path
 from datetime import datetime
 from time import sleep, strftime, localtime
 from pandastable import Table, dialogs
 from importlib.resources import files
-from whafer.interfacce import Sorgente, Contatto, Gruppo, Messaggio
+from whafer.interfacce import Sorgente, Contatto, Gruppo, Messaggio, Chat
 from whafer.progetti import Progetto
+from whafer.costanti import STATO_MESSAGGIO
 
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -39,6 +45,63 @@ class TagFrame(ctk.CTkFrame):
         self.intestazione.grid(row=0, column=0, sticky="w", padx=10, pady=10)
         self.descrizione.grid(row=1, column=0, sticky="w", padx=10, pady=(0,10))
         self.pulsante.grid(row=0, column=1, sticky="ns", padx=10, pady=(25, 0))
+
+class SenderMessageFrame(ctk.CTkFrame):
+    def __init__(self, parent, testo: str, dataInvio: datetime, dataRicezioneServer: datetime, stato: int|None):
+        super().__init__(parent)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure((0,4), weight=1)
+
+        self.testo = ctk.CTkLabel(self, text=testo, font=ctk.CTkFont(size=15, weight="bold"), anchor="e", compound="left")
+        self.dataInvio = ctk.CTkLabel(self, text="Invio: "+dataInvio.strftime('%d-%m-%Y %H:%M:%S'), font=ctk.CTkFont(size=12), anchor="e", wraplength=600)
+        self.dataRicezioneServer = ctk.CTkLabel(self, text="Ricezione Server: "+dataRicezioneServer.strftime('%d-%m-%Y %H:%M:%S'), font=ctk.CTkFont(size=12), anchor="e", wraplength=600)
+        self.inviato = STATO_MESSAGGIO.get("Inviato")
+        self.consegnato = STATO_MESSAGGIO.get("Consegnato")
+        self.letto = STATO_MESSAGGIO.get("Letto")
+        match(stato):
+            case self.inviato:
+                self.stato = ctk.CTkLabel(self, text="Stato: Inviato", font=ctk.CTkFont(size=12), anchor="e", compound="left")
+            case self.consegnato:
+                self.stato = ctk.CTkLabel(self, text="Stato: Consegnato", font=ctk.CTkFont(size=12), anchor="e", compound="left")
+            case self.letto:
+                self.stato = ctk.CTkLabel(self, text="Stato: Letto", font=ctk.CTkFont(size=12), anchor="e", compound="left")
+                      
+
+        self.testo.grid(row=0, column=0, sticky="e", padx=10, pady=10)
+        self.dataInvio.grid(row=1, column=0, sticky="e", padx=10)
+        self.dataRicezioneServer.grid(row=2, column=0, sticky="e", padx=10)
+        self.stato.grid(row=3, column=0, sticky="e", padx=10, pady=(0,10))
+
+
+class ReceiverMessageFrame(ctk.CTkFrame):
+    def __init__(self, parent, testo: str, dataRicezione: datetime):
+        super().__init__(parent)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure((0,2), weight=1)
+
+        self.testo = ctk.CTkLabel(self, text=testo, font=ctk.CTkFont(size=15, weight="bold"), anchor="w", compound="left")
+        self.dataRicezione = ctk.CTkLabel(self, text="Ricezione: "+dataRicezione.strftime('%d-%m-%Y %H:%M:%S'), font=ctk.CTkFont(size=12), anchor="w", wraplength=600)
+
+        self.testo.grid(row=0, column=0, sticky="w", padx=10, pady=10)
+        self.dataRicezione.grid(row=2, column=0, sticky="w", padx=10, pady=(0,10))
+
+class ReceiverGroupMessageFrame(ctk.CTkFrame):
+    def __init__(self, parent, testo: str, dataRicezione: datetime, sender:str):
+        super().__init__(parent)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure((0,3), weight=1)
+
+        self.testo = ctk.CTkLabel(self, text=testo, font=ctk.CTkFont(size=15, weight="bold"), anchor="w", compound="left")
+        self.dataRicezione = ctk.CTkLabel(self, text="Ricezione: "+dataRicezione.strftime('%d-%m-%Y %H:%M:%S'), font=ctk.CTkFont(size=12), anchor="w", wraplength=600)
+        self.sender = ctk.CTkLabel(self, text="Inviato da: +"+sender, font=ctk.CTkFont(size=12), anchor="w", wraplength=600)
+
+        self.testo.grid(row=0, column=0, sticky="w", padx=10, pady=10)
+        self.dataRicezione.grid(row=1, column=0, sticky="w", padx=10)
+        self.sender.grid(row=2, column=0, sticky="w", padx=10, pady=(0,10))
+
 
 class BaseView(ctk.CTkFrame):
     def __init__(self, parent):
@@ -130,11 +193,12 @@ class RiepilogoView(BaseView):
 
 class GruppiView(BaseView):
 
-    def __init__(self, parent, gruppi: list[Gruppo]):
+    def __init__(self, parent, gruppi: list[Gruppo], contatti: list[Contatto]):
         super().__init__(parent)
 
         self.gruppi = gruppi
         self.gruppiFiltrati = gruppi
+        self.contatti = contatti
         #self.gruppoCorrente = 0
         #self.numGruppi = 5
 
@@ -187,9 +251,9 @@ class GruppiView(BaseView):
             self.emptyLabel = ctk.CTkLabel(self, text="Non è presente alcun gruppo WhatsApp", font=ctk.CTkFont(size=14))
 
 
-    def mostra_vista_gruppo(self, gruppo: Gruppo):
+    def mostra_vista_gruppo(self, gruppo: Gruppo, contatti: list[Contatto]):
         self.destroy()
-        self.master.vista = GruppoView(self.master, gruppo)
+        self.master.vista = GruppoView(self.master, gruppo, contatti)
  
     def mostra_gruppi(self):
         for widget in self.frameGruppi.winfo_children():
@@ -199,7 +263,7 @@ class GruppiView(BaseView):
                                                gruppo.nome,
                                                f"Creato in data: {str(gruppo.dataCreazione.strftime('%d-%m-%Y %H:%M:%S'))}",
                                                "Vai al gruppo",
-                                               lambda gruppo=gruppo: self.mostra_vista_gruppo(gruppo))
+                                               lambda gruppo=gruppo: self.mostra_vista_gruppo(gruppo, self.contatti))
             gruppoFrame.pack(fill="x", padx=10, pady=(10,0))
             ttk.Separator(self.frameGruppi, orient='horizontal').pack(fill="x", padx=10, pady=(10,0))
 
@@ -229,23 +293,24 @@ class GruppiView(BaseView):
         self.mostra_gruppi()
 
 class GruppoView(BaseView):
-    def __init__(self, parent, gruppo: Gruppo):
+    def __init__(self, parent, gruppo: Gruppo, contatti: list[Contatto]|None):
         super().__init__(parent)
 
         self.grid_columnconfigure((0,1), weight=1)
         self.grid_rowconfigure(4, weight=1)
 
         self.gruppo = gruppo
+        self.contatti = contatti
 
         gruppoImg = ctk.CTkImage(genericUserImg, size=(100,100))
         self.gruppoImg = ctk.CTkLabel(self, text="", image=gruppoImg, compound="right")
         self.intestazione = ctk.CTkLabel(self, text=gruppo.nome+" ", font=ctk.CTkFont(size=25, weight="bold"))
 
         self.dataCreazione = ctk.CTkLabel(self, text=f"Creato in data: {str(gruppo.dataCreazione.strftime('%d-%m-%Y %H:%M:%S'))}", justify="left")
-        self.creatore = ctk.CTkLabel(self, text=f"Creato da: {gruppo.creatore.nome}", justify="left")
+        self.creatore = ctk.CTkLabel(self, text=f"Creato da: +{gruppo.creatore.nome}", justify="left")
 
         self.intestazioneMembri = ctk.CTkLabel(self, text="Membri", font=ctk.CTkFont(size=25, weight="bold"), justify="left")
-        self.intestazioneMessaggi = ctk.CTkLabel(self, text="Messaggi", font=ctk.CTkFont(size=25, weight="bold"), justify="left")
+        self.intestazioneMessaggi = ctk.CTkLabel(self, text="Anteprima Messaggi", font=ctk.CTkFont(size=25, weight="bold"), justify="left")
 
         self.frameMembri = ctk.CTkScrollableFrame(self)
         self.frameMessaggi = ctk.CTkScrollableFrame(self)
@@ -270,9 +335,19 @@ class GruppoView(BaseView):
         amministratori = self.gruppo.amministratori
         if amministratori:
             for amministratore in self.gruppo.amministratori:
+                if(amministratore.numeroTelefonico == ""):
+                    amministratore.numeroTelefonico = "Me stesso"
+                else:
+                    amministratore.numeroTelefonico = "+"+amministratore.numeroTelefonico
+                for contatto in self.contatti:
+                    if(amministratore.numeroTelefonico == "+39"+contatto.numeroTelefonico):
+                        username = contatto.nome
+                        break
+                    else:
+                        username = "Username N/D"
                 membroFrame = TagFrame(self.frameMembri, 
+                                                username,
                                                 amministratore.numeroTelefonico,
-                                                "Username N/D",
                                                 "Vai al contatto",
                                                 None)
                 membroFrame.pack(fill="x", padx=10, pady=(10,0))
@@ -287,9 +362,17 @@ class GruppoView(BaseView):
             for partecipante in self.gruppo.partecipanti:
                 if(partecipante.numeroTelefonico == ""):
                     partecipante.numeroTelefonico = "Me stesso"
+                else:
+                    partecipante.numeroTelefonico = "+"+partecipante.numeroTelefonico
+                for contatto in self.contatti:
+                    if(partecipante.numeroTelefonico == "+39"+contatto.numeroTelefonico):
+                        username = contatto.nome
+                        break
+                    else:
+                        username = "Username N/D"
                 membroFrame = TagFrame(self.frameMembri, 
+                                                username,
                                                 partecipante.numeroTelefonico,
-                                                "Username N/D",
                                                 "Vai al contatto",
                                                 None)
                 membroFrame.pack(fill="x", padx=10, pady=(10,0))
@@ -302,10 +385,11 @@ class GruppoView(BaseView):
         for widget in self.frameMessaggi.winfo_children():
             widget.destroy()
         messaggi = self.gruppo.messaggi
+        #TODO Implementare possibilità di visualizzare dettagli relativi ad un messaggio visualizzato in anteprima
         if messaggi:
             for messaggio in messaggi[0:10]:
                 messaggioFrame = TagFrame(self.frameMessaggi, 
-                                                "Messaggio",
+                                                "Messaggio:",
                                                 messaggio.contenuto,
                                                 "Vai al messaggio",
                                                 None)
@@ -313,6 +397,88 @@ class GruppoView(BaseView):
                 ttk.Separator(self.frameMessaggi, orient='horizontal').pack(fill="x", padx=10, pady=(10,0))
         else:
             messaggioFrame = ctk.CTkLabel(self.frameMessaggi, )
+
+class ConversazioniView(BaseView):
+
+    def __init__(self, parent, chat: list[Chat], contatti: list[Contatto]):
+        super().__init__(parent)
+
+        self.chat = chat
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+
+        self.frameConversazioni = ctk.CTkScrollableFrame(self)
+        self.intestazione = ctk.CTkLabel(self, text="Elenco conversazioni", font=ctk.CTkFont(size=25, weight="bold"))
+        self.intestazione.grid(row=0, column=0, columnspan=3, padx=(20,0), pady=(20,0), sticky="w")
+        self.frameConversazioni.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        
+        
+        for chat_s in self.chat:
+            for contatto in contatti:
+                if chat_s.soggetto == "39"+contatto.numeroTelefonico:
+                    chat_s.soggetto = contatto.nome
+
+        self.mostra_conversazioni()
+
+        
+
+    def mostra_conversazioni(self):
+        for widget in self.frameConversazioni.winfo_children():
+            widget.destroy()
+        for chat in self.chat:
+            chatFrame = TagFrame(self.frameConversazioni, 
+                                               chat.soggetto,
+                                               "User: "+chat.user,
+                                               "Vai alla conversazione",
+                                               lambda chat=chat: self.mostra_vista_conversazione(chat))
+            chatFrame.pack(fill="x", padx=10, pady=(10,0))
+            ttk.Separator(self.frameConversazioni, orient='horizontal').pack(fill="x", padx=10, pady=(10,0))
+
+    def mostra_vista_conversazione(self, chat: Chat):
+        self.destroy()
+        self.master.vista = ConversazioneView(self.master, chat)
+
+class ConversazioneView(BaseView):
+    def __init__(self, parent, chat: Chat):
+        super().__init__(parent)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+
+        messaggi = chat.messaggi
+        self.intestazione = ctk.CTkLabel(self, text="Dettagli conversazione: "+chat.soggetto, font=ctk.CTkFont(size=25, weight="bold"))
+        self.frameConversazione = ctk.CTkScrollableFrame(self)
+        self.intestazione.grid(row=0, column=0, columnspan=3, padx=(20,0), pady=(20,0), sticky="w")
+        self.frameConversazione.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+
+        if messaggi:
+            for messaggio in messaggi:
+                if(messaggio.from_me):
+                    messaggioFrame = SenderMessageFrame(self.frameConversazione, 
+                                                    messaggio.contenuto,
+                                                    messaggio.dataInvio,
+                                                    messaggio.dataRicezioneServer,
+                                                    messaggio.status
+                                                    )
+                else:
+                    if(messaggio.groupMessage):
+                        messaggioFrame = ReceiverGroupMessageFrame(self.frameConversazione, 
+                                                        messaggio.contenuto,
+                                                        messaggio.dataRicezione,
+                                                        messaggio.sender
+                                                        )
+                    else:
+                        messaggioFrame = ReceiverMessageFrame(self.frameConversazione, 
+                                                        messaggio.contenuto,
+                                                        messaggio.dataRicezione
+                                                        )
+                messaggioFrame.pack(fill="x", padx=10, pady=(10,0))
+                ttk.Separator(self.frameConversazione, orient='horizontal').pack(fill="x", padx=10, pady=(10,0))
+        else:
+            pass
+
+
 
 class ContattiView(BaseView):
 
@@ -382,7 +548,7 @@ class ContattiView(BaseView):
         for contatto in islice(self.contattiFiltrati, self.contattoCorrente, self.contattoCorrente+self.numContatti):
             self.frameContatti.contatto = TagFrame(self.frameContatti, 
                                                contatto.nome,
-                                               f"Numero telefonico: +{contatto.numeroTelefonico}",
+                                               f"Numero telefonico: {contatto.numeroTelefonico}",
                                                "Vai al contatto",
                                                lambda contatto=contatto: self.mostra_vista_contatto(contatto))
             self.frameContatti.contatto.pack(fill="x", padx=10, pady=(10,0))
@@ -434,6 +600,7 @@ class ContattoView(BaseView):
         self.immagineProfilo = ctk.CTkLabel(self, text="Immagine profilo:\n", image=gruppoImg, compound="bottom", justify="left")
         self.intestazione.pack(anchor="w", padx=20, pady=20)
         self.numeroTelefonico.pack(anchor="w", padx=20)
+        #TODO Implementare visualizzazione immagine profilo contatto
         self.immagineProfilo.pack(anchor="w", padx=20)
 
 class ContenutiView(BaseView):
@@ -457,7 +624,8 @@ class ContenutiView(BaseView):
         self.contattiLabel = ctk.CTkLabel(self.frameOggetti, text="Questa tabella contiene i risultati ottenuti da una join delle tabelle 'jid' e 'chat_view'.\nFai riferimento alla documentazione di WhaFeR per i dettagli.", font=ctk.CTkFont(size=14), justify="left")
         self.contattiLabel.pack(anchor="w", padx=20)
         self.gruppoPulsantiContatti = ctk.CTkFrame(self.frameOggetti, fg_color="transparent")
-        self.pulsanteContattiEsporta = ctk.CTkButton(self.gruppoPulsantiContatti, text="Esporta Tabella Contatti", command=self.reporta_contatti).pack(side="right", anchor="se", padx=10)
+        self.pulsanteContattiEsporta = ctk.CTkButton(self.gruppoPulsantiContatti, text="Esporta Tabella Contatti (CSV)", command=self.reporta_contatti_csv).pack(side="right", anchor="se")
+        self.pulsanteContattiEsporta = ctk.CTkButton(self.gruppoPulsantiContatti, text="Esporta Tabella Contatti (PDF)", command=self.reporta_contatti).pack(side="right", anchor="se", padx=10)
         self.pulsanteContattiAnalisi = ctk.CTkButton(self.gruppoPulsantiContatti, text="Analisi Tabella Contatti", command=lambda: self.analisi_tabella(self.contatti)).pack(side="left", anchor="se")
         self.gruppoPulsantiContatti.pack(anchor="w", padx=20, pady=(10,0))
 
@@ -467,7 +635,8 @@ class ContenutiView(BaseView):
         self.gruppiLabel = ctk.CTkLabel(self.frameOggetti, text="Questa tabella contiene i risultati ottenuti da una join delle tabelle 'jid' e 'chat', selezionando solo le righe riferite ai gruppi (type=1).\nFai riferimento alla documentazione di WhaFeR per i dettagli.", font=ctk.CTkFont(size=14), justify="left")
         self.gruppiLabel.pack(anchor="w", padx=20)
         self.gruppoPulsantiGruppi = ctk.CTkFrame(self.frameOggetti, fg_color="transparent")
-        self.pulsanteGruppiEsporta = ctk.CTkButton(self.gruppoPulsantiGruppi, text="Esporta Tabella Gruppi", command=self.reporta_gruppi).pack(side="right", anchor="se", padx=10)
+        self.pulsanteGruppiEsporta = ctk.CTkButton(self.gruppoPulsantiGruppi, text="Esporta Tabella Gruppi (CSV)", command=self.reporta_gruppi_csv).pack(side="right", anchor="se")
+        self.pulsanteGruppiEsporta = ctk.CTkButton(self.gruppoPulsantiGruppi, text="Esporta Tabella Gruppi (PDF)", command=self.reporta_gruppi).pack(side="right", anchor="se", padx=10)
         self.pulsanteGruppiAnalisi = ctk.CTkButton(self.gruppoPulsantiGruppi, text="Analisi Tabella Gruppi", command=lambda: self.analisi_tabella(self.gruppi)).pack(side="left", anchor="se")
         self.gruppoPulsantiGruppi.pack(anchor="w", padx=20, pady=(10,0))
 
@@ -477,7 +646,8 @@ class ContenutiView(BaseView):
         self.messaggiLabel = ctk.CTkLabel(self.frameOggetti, text="Questa tabella contiene i risultati ottenuti da una query sulla tabella 'message'.\nFai riferimento alla documentazione di WhaFeR per i dettagli.", font=ctk.CTkFont(size=14), justify="left")
         self.messaggiLabel.pack(anchor="w", padx=20)
         self.gruppoPulsantiMessaggi = ctk.CTkFrame(self.frameOggetti, fg_color="transparent")
-        self.pulsanteMessaggiEsporta = ctk.CTkButton(self.gruppoPulsantiMessaggi, text="Esporta Tabella message", command=self.reporta_messaggi).pack(side="right", anchor="se", padx=10)
+        self.pulsanteMessaggiEsporta = ctk.CTkButton(self.gruppoPulsantiMessaggi, text="Esporta Tabella message (CSV)", command=self.reporta_messaggi_csv).pack(side="right", anchor="se")
+        self.pulsanteMessaggiEsporta = ctk.CTkButton(self.gruppoPulsantiMessaggi, text="Esporta Tabella message (PDF)", command=self.reporta_messaggi).pack(side="right", anchor="se", padx=10)
         self.pulsanteMessaggiAnalisi = ctk.CTkButton(self.gruppoPulsantiMessaggi, text="Analisi Tabella message", command=lambda: self.analisi_tabella(self.messaggi)).pack(side="left", anchor="se")
         self.gruppoPulsantiMessaggi.pack(anchor="w", padx=20, pady=(10,0))
 
@@ -488,7 +658,8 @@ class ContenutiView(BaseView):
         self.sqliteLabel = ctk.CTkLabel(self.frameOggetti, text="Questa tabella contiene i risultati ottenuti da una query sulla tabella 'sqlite_sequence'.\nFai riferimento alla documentazione di WhaFeR per i dettagli.", font=ctk.CTkFont(size=14), justify="left")
         self.sqliteLabel.pack(anchor="w", padx=20)
         self.gruppoPulsantiSqlite = ctk.CTkFrame(self.frameOggetti, fg_color="transparent")
-        self.pulsanteSqliteEsporta = ctk.CTkButton(self.gruppoPulsantiSqlite, text="Esporta Tabella sqlite_sequence", command=self.reporta_sqlite_sequence).pack(side="right", anchor="se", padx=10)
+        self.pulsanteSqliteEsporta = ctk.CTkButton(self.gruppoPulsantiSqlite, text="Esporta Tabella sqlite_sequence (CSV)", command=self.reporta_sqlite_sequence_csv).pack(side="right", anchor="se")
+        self.pulsanteSqliteEsporta = ctk.CTkButton(self.gruppoPulsantiSqlite, text="Esporta Tabella sqlite_sequence (PDF)", command=self.reporta_sqlite_sequence).pack(side="right", anchor="se", padx=10)
         self.pulsanteSqliteAnalisi = ctk.CTkButton(self.gruppoPulsantiSqlite, text="Analisi Tabella sqlite_sequence", command=lambda: self.analisi_tabella(self.sqlite_sequence)).pack(side="left", anchor="se")
         self.gruppoPulsantiSqlite.pack(anchor="w", padx=20, pady=(10,0))
 
@@ -502,32 +673,36 @@ class ContenutiView(BaseView):
         pass
 
     def reporta_contatti(self):
-        percorso = (self.progetto.percorso / "reports" / f"contatti_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.csv")
-        
-        with open(percorso, mode="wb") as file:
-            self.contatti.to_csv(file, index=False, sep=";")
-            self.apri_popup_successo(percorso)
+        percorso = Path(self.progetto.percorso / "reports" / f"contatti_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.pdf")
+        self.genera_report(percorso, self.contatti)
+
+    def reporta_contatti_csv(self):
+        percorso = Path(self.progetto.percorso / "reports" / f"contatti_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.csv")
+        self.genera_report_csv(percorso, self.contatti)
 
     def reporta_gruppi(self):
-        percorso = (self.progetto.percorso / "reports" / f"gruppi_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.csv")
-        
-        with open(percorso, mode="wb") as file:
-            self.gruppi.to_csv(file, index=False, sep=";")
-            self.apri_popup_successo(percorso)
+        percorso = Path(self.progetto.percorso / "reports" / f"gruppi_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.pdf")
+        self.genera_report(percorso, self.gruppi)
 
-    def reporta_messaggi(self):
-        percorso = (self.progetto.percorso / "reports" / f"messaggi_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.csv")
-        
-        with open(percorso, mode="wb") as file:
-            self.messaggi.to_csv(file, index=False, sep=";")
-            self.apri_popup_successo(percorso)
+    def reporta_gruppi_csv(self):
+        percorso = Path(self.progetto.percorso / "reports" / f"gruppi_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.csv")
+        self.genera_report_csv(percorso, self.gruppi)
+
+    def reporta_messaggi(self): 
+        percorso = Path(self.progetto.percorso / "reports" / f"messaggi_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.pdf")
+        self.genera_report(percorso, self.messaggi)
+
+    def reporta_messaggi_csv(self):
+        percorso = Path(self.progetto.percorso / "reports" / f"messaggi_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.csv")
+        self.genera_report_csv(percorso, self.messaggi)
 
     def reporta_sqlite_sequence(self):
+        percorso = (self.progetto.percorso / "reports" / f"sqlite_sequence_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.pdf")
+        self.genera_report(percorso, self.sqlite_sequence)
+
+    def reporta_sqlite_sequence_csv(self):
         percorso = (self.progetto.percorso / "reports" / f"sqlite_sequence_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.csv")
-        
-        with open(percorso, mode="wb") as file:
-            self.messaggi.to_csv(file, index=False, sep=";")
-            self.apri_popup_successo(percorso)
+        self.genera_report_csv(percorso, self.sqlite_sequence)
 
     def apri_popup_successo(self, percorso):
         self.successPopup = ctk.CTkToplevel()
@@ -548,6 +723,54 @@ class ContenutiView(BaseView):
         self.frameContatti.pack(expand=True, fill="both", padx=10, pady=10)
         self.tabella.show()
         self.tabella.redraw()
+
+
+    def genera_report(self, percorso, dataframe):
+
+        if (int(len(dataframe.columns)) > 45):
+            custom_pagesize = (7000,3000)
+        elif (int(len(dataframe.columns)) > 10):
+            custom_pagesize = landscape(A1)
+        elif (int(len(dataframe.columns)) > 5):
+            custom_pagesize = landscape(A4)
+        else:
+            custom_pagesize = A4
+
+        # Crea il documento PDF
+        pdf = SimpleDocTemplate(str(percorso), pagesize=custom_pagesize, leftMargin=10, rightMargin=10)
+        elements = []
+
+        # Converte il DataFrame in una lista di liste
+        data = [dataframe.columns.to_list()] + dataframe.values.tolist()
+
+        # Crea una tabella
+        table = ReportLabTable(data)
+
+        # Applica uno stile alla tabella
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),  # Sfondo grigio per l'intestazione
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),  # Testo bianco per l'intestazione
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Allinea il testo al centro
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Font grassetto per l'intestazione
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),  # Padding per l'intestazione
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),  # Sfondo beige per le celle
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Aggiunge una griglia
+        ])
+        table.setStyle(style)
+
+        # Aggiungi la tabella agli elementi del PDF
+        elements.append(table)
+
+        # Costruisce il PDF
+        pdf.build(elements)
+        print(f"Report PDF generato con successo")
+        self.apri_popup_successo(str(percorso))
+
+
+    def genera_report_csv(self, percorso, dataframe):
+        with open(percorso, mode="wb") as file:
+            dataframe.to_csv(file, index=False, sep=";")
+            self.apri_popup_successo(percorso)
 
 
 class MediaView(BaseView):
@@ -579,7 +802,7 @@ class MediaView(BaseView):
         self.errorLabel.pack(anchor="w", padx=20, pady=30)
 
         if len(os.listdir(str(self.progetto.percorso / "media"))) == 0:
-            self.apriMedia.configure(state="disabled", text_color_disabled="#636363", fg_color="darkgrey")
+            self.apriMedia.configure(state="disabled", fg_color="darkgrey")
 
         
 
@@ -634,6 +857,7 @@ class Applicazione(ctk.CTkFrame):
         self.intestazione = ctk.CTkLabel(self.navbar, text="WhaFeR", font=ctk.CTkFont(size=20, weight="bold"), width=200, pady=30)
         self.pulsanteRiepilogo = ctk.CTkButton(self.navbar, text="Riepilogo", command=self.mostra_vista_riepilogo, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
         self.pulsanteGruppo = ctk.CTkButton(self.navbar, text="Gruppi", command=self.mostra_vista_gruppi, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
+        self.pulsanteConversazioni = ctk.CTkButton(self.navbar, text="Conversazioni", command=self.mostra_vista_conversazioni, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)        
         self.pulsanteContatto = ctk.CTkButton(self.navbar, text="Contatti", command=self.mostra_vista_contatti, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
         self.pulsanteMedia = ctk.CTkButton(self.navbar, text="Media", command=self.mostra_vista_media, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
         self.pulsanteContenuti = ctk.CTkButton(self.navbar, text="Analisi tabelle DB", command=self.mostra_vista_contenuti, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
@@ -644,6 +868,7 @@ class Applicazione(ctk.CTkFrame):
         self.intestazione.pack(fill="x", pady=5)
         self.pulsanteRiepilogo.pack(fill="x")
         self.pulsanteGruppo.pack(fill="x")
+        self.pulsanteConversazioni.pack(fill="x")
         self.pulsanteContatto.pack(fill="x")
         self.pulsanteMedia.pack(fill="x")
         self.pulsanteContenuti.pack(fill="x")
@@ -653,6 +878,7 @@ class Applicazione(ctk.CTkFrame):
         self.pulsanteRiepilogo.configure(fg_color="#1F6AA5", hover=False)
         self.pulsanteGruppo.configure(fg_color="transparent", hover=True)
         self.pulsanteContatto.configure(fg_color="transparent", hover=True)
+        self.pulsanteConversazioni.configure(fg_color="transparent", hover=True)
         self.pulsanteContenuti.configure(fg_color="transparent", hover=True)
         self.pulsanteMedia.configure(fg_color="transparent", hover=True)
         self.vista.destroy()
@@ -662,15 +888,27 @@ class Applicazione(ctk.CTkFrame):
         self.pulsanteGruppo.configure(fg_color="#1F6AA5", hover=False)
         self.pulsanteRiepilogo.configure(fg_color="transparent", hover=True)
         self.pulsanteContatto.configure(fg_color="transparent", hover=True)
+        self.pulsanteConversazioni.configure(fg_color="transparent", hover=True)
         self.pulsanteContenuti.configure(fg_color="transparent", hover=True)
         self.pulsanteMedia.configure(fg_color="transparent", hover=True)
         self.vista.destroy()
-        self.vista = GruppiView(self, self.progetto.sorgente.gruppi)
+        self.vista = GruppiView(self, self.progetto.sorgente.gruppi, self.progetto.sorgente.contatti)
+
+    def mostra_vista_conversazioni(self):
+        self.pulsanteConversazioni.configure(fg_color="#1F6AA5", hover=False)
+        self.pulsanteGruppo.configure(fg_color="transparent", hover=True)
+        self.pulsanteRiepilogo.configure(fg_color="transparent", hover=True)
+        self.pulsanteContatto.configure(fg_color="transparent", hover=True)
+        self.pulsanteContenuti.configure(fg_color="transparent", hover=True)
+        self.pulsanteMedia.configure(fg_color="transparent", hover=True)
+        self.vista.destroy()
+        self.vista = ConversazioniView(self, self.progetto.sorgente.chat ,self.progetto.sorgente.contatti)
 
     def mostra_vista_contatti(self):
         self.pulsanteContatto.configure(fg_color="#1F6AA5", hover=False)
         self.pulsanteRiepilogo.configure(fg_color="transparent", hover=True)
         self.pulsanteGruppo.configure(fg_color="transparent", hover=True)
+        self.pulsanteConversazioni.configure(fg_color="transparent", hover=True)
         self.pulsanteContenuti.configure(fg_color="transparent", hover=True)
         self.pulsanteMedia.configure(fg_color="transparent", hover=True)
         self.vista.destroy()
@@ -681,6 +919,7 @@ class Applicazione(ctk.CTkFrame):
         self.pulsanteRiepilogo.configure(fg_color="transparent", hover=True)
         self.pulsanteContatto.configure(fg_color="transparent", hover=True)
         self.pulsanteGruppo.configure(fg_color="transparent", hover=True)
+        self.pulsanteConversazioni.configure(fg_color="transparent", hover=True)
         self.pulsanteMedia.configure(fg_color="transparent", hover=True)
         self.vista.destroy()
         self.vista = ContenutiView(self, self.progetto)
@@ -691,6 +930,7 @@ class Applicazione(ctk.CTkFrame):
         self.pulsanteRiepilogo.configure(fg_color="transparent", hover=True)
         self.pulsanteContatto.configure(fg_color="transparent", hover=True)
         self.pulsanteGruppo.configure(fg_color="transparent", hover=True)
+        self.pulsanteConversazioni.configure(fg_color="transparent", hover=True)
         self.vista.destroy()
         self.vista = MediaView(self, self.progetto)
 
@@ -885,19 +1125,39 @@ class Introduzione(ctk.CTkFrame):
                 sorgenti = ['whafer_extractedfiles/msgstore.db', 'whafer_extractedfiles/wa.db', 'whafer_extractedfiles/com.whatsapp_preferences_light.xml', 'whafer_extractedfiles/startup_prefs.xml']
                 progetto = Progetto(percorsoProgetto, sorgenti=sorgenti)
                 self.master.main = Applicazione(self.master, progetto)
+
+                # Rimozione dei file temporanei estratti dallo smartphone
+                projectFolder = os.path.dirname(os.path.abspath(__file__))
+                shutil.rmtree(projectFolder+"/whafer_extractedfiles")
+
                 self.destroy()
                 
         except Exception as e:
             print("Si è verificato un errore:", str(e))
 
     
+class ControlloDipendenze(ctk.CTkFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        label = ctk.CTkLabel(self, text="Controllo dipendenze: FALLITO\n Assicurati che adb sia installato e inserito \n correttamente nelle variabili d'ambiente.", font=ctk.CTkFont(size=14)).pack(pady=20)
+        close = ctk.CTkButton(self, text="CHIUDI", command=self.quit, fg_color="red", hover_color="darkred").pack(pady=5)
 
 def main():
     app = ctk.CTk()
     ctk.set_appearance_mode("System")
     app.title("WhaFeR - WhatsApp Forensic Reporter")
-    app.geometry(f"{1100}x{580}")
-    app.main = Introduzione(app).pack(fill="both", expand=True)
+
+    # Controllo delle dipendenze
+    try:
+        check = subprocess.Popen('adb --version', stdin = subprocess.PIPE, stdout=subprocess.PIPE, stderr=None)
+        app.geometry(f"{1100}x{580}")
+        app.main = Introduzione(app).pack(fill="both", expand=True)
+    except:
+        print("Errore: adb non trovato. Assicurati che sia installato e inserito nelle'variabili d'ambiente.")
+        app.geometry(f"{500}x{150}")
+        app.main = ControlloDipendenze(app).pack(fill="both", expand=True)
+    
     app.mainloop()
     
 

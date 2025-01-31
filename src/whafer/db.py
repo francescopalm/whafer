@@ -18,7 +18,7 @@ class SorgenteDB():
             self.wa = sqlite3.connect(wa)
         except TypeError:
             self.wa = wa
-
+    """
     @property
     def contatti(self)->list[Contatto]:
         #TODO nome dei contatti
@@ -30,7 +30,19 @@ class SorgenteDB():
         nomi = numeriTelefonici
         contatti = list(map(ContattoDB, _id, numeriTelefonici, nomi))
         return contatti
-    
+
+    """
+    @property
+    def contatti(self)->list[Contatto]:
+        #TODO nome dei contatti
+        cursore = self.wa.cursor()
+        cursore.execute("SELECT _id, number, display_name "
+                        "FROM wa_contacts "
+                        f"WHERE phone_type = 2")
+        _id, numeriTelefonici, nomiVisualizzati = zip(*cursore.fetchall())
+        contatti = list(map(ContattoDB, _id, numeriTelefonici, nomiVisualizzati))
+        return contatti
+
     @property
     def gruppi(self)->list[Gruppo]:
         cursore = self.msgstore.cursor()
