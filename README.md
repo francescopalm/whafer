@@ -33,6 +33,15 @@ whafer-gui
 
 ## Changelog
 
+### [0.2.1] – 30-01-2025
+Sviluppo a cura di: Francesco Palmisano
+
+### Modifiche e implementazioni
+•	Implementata visualizzazione delle conversazioni con i dettagli relativi ad ogni singolo messaggio scambiato \
+•	Aggiunta verifica delle dipendenze all’avvio dell’applicativo \
+•	Aggiunta possibilità di esportare i report anche in formato PDF \
+•	Implementata associazione numero telefonico -> nome del contatto salvato in rubrica \
+
 ### [0.2.0] – 07-11-2024
 Sviluppo a cura di: Francesco Palmisano
 
