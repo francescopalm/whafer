@@ -54,8 +54,11 @@ class Progetto:
                                 str(percorsoWa),
                                 str(self.percorso / "sorgenti" / "wa.db")])
 
-        self.sorgentefile = whafer.db.SorgenteDB(self.percorso / "sorgenti" / "msgstore.db")
-
+        if (self.percorso / "sorgenti" / "wa.db").exists():
+            self.sorgentefile = whafer.db.SorgenteDB(msgstore = self.percorso / "sorgenti" / "msgstore.db", wa = self.percorso / "sorgenti" / "wa.db")
+        else:
+            self.sorgentefile = whafer.db.SorgenteDB(self.percorso / "sorgenti" / "msgstore.db")
+            
         # Esegui gli hash
         funzione_hash = costruisci_calcola_hash(hashlib.sha256, hashlib.md5)
         if not (self.percorso / "integrità.csv").exists():
