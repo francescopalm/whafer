@@ -33,7 +33,7 @@ whafer-gui
 
 ## Changelog
 
-## [0.2.1] – 30-01-2025
+## [0.2.1] – 31-01-2025
 Sviluppo a cura di: Francesco Palmisano
 
 ### Modifiche e implementazioni
