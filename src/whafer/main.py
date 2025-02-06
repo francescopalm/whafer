@@ -813,12 +813,16 @@ class MediaView(BaseView):
             proc1.terminate()
             print(int(out.decode("utf-8")))
             percorso = Path(self.progetto.percorso / "media")
-            percorso.replace(" ", "\\ ")
+            #percorso.replace(" ", "\\ ")
             if(int(out.decode("utf-8")) <= 30):
-                proc1 = subprocess.Popen('adb pull -a /sdcard/WhatsApp/Media/. '+str(percorso))
+                #proc1 = subprocess.Popen('adb pull -a /sdcard/WhatsApp/Media/. '+str(percorso))
+                comando = ["adb", "pull", "-a", "/sdcard/WhatsApp/Media/.", percorso]
+                proc1 = subprocess.Popen(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc1.wait()
             else:
-                proc1 = subprocess.Popen('adb pull -a /sdcard/Android/media/com.whatsapp/WhatsApp/Media/. '+str(percorso))
+                #proc1 = subprocess.Popen('adb pull -a /sdcard/Android/media/com.whatsapp/WhatsApp/Media/. '+str(percorso))
+                comando = ["adb", "pull", "-a", "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/.", percorso]
+                proc1 = subprocess.Popen(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc1.wait()
             proc1.terminate()
             self.apriMedia.configure(state="normal", fg_color="#1F6AA5")
