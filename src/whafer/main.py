@@ -811,7 +811,7 @@ class MediaView(BaseView):
             proc1 = subprocess.Popen('adb shell', stdin = subprocess.PIPE, stdout=subprocess.PIPE, stderr=None)
             out, err = proc1.communicate(b'getprop ro.build.version.sdk\nexit') # Controllo API level Android
             proc1.terminate()
-            print("API level: "+int(out.decode("utf-8")))
+            print("API level: "+str(int(out.decode("utf-8"))))
             percorso = Path(self.progetto.percorso / "media")
             #percorso.replace(" ", "\\ ")
             if(int(out.decode("utf-8")) <= 30):
