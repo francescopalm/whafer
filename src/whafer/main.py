@@ -706,7 +706,7 @@ class ContenutiView(BaseView):
 
     def apri_popup_successo(self, percorso):
         self.successPopup = ctk.CTkToplevel()
-        self.successPopup.geometry("600x150")
+        self.successPopup.geometry("800x150")
         self.successPopup.title("Esportazione effettuata")
         self.successLabel = ctk.CTkLabel(self.successPopup, text="Esportazione effettuata con successo in:\n"+str(percorso), font=ctk.CTkFont(size=14)).pack(pady=20)
         chiudi_btn = ctk.CTkButton(self.successPopup, text="CHIUDI", command=self.successPopup.destroy)
@@ -811,7 +811,7 @@ class MediaView(BaseView):
             proc1 = subprocess.Popen('adb shell', stdin = subprocess.PIPE, stdout=subprocess.PIPE, stderr=None)
             out, err = proc1.communicate(b'getprop ro.build.version.sdk\nexit') # Controllo API level Android
             proc1.terminate()
-            print(int(out.decode("utf-8")))
+            print("API level: "+int(out.decode("utf-8")))
             percorso = Path(self.progetto.percorso / "media")
             #percorso.replace(" ", "\\ ")
             if(int(out.decode("utf-8")) <= 30):
@@ -861,7 +861,7 @@ class Applicazione(ctk.CTkFrame):
         self.navbar.pack(side="left", fill="both", ipadx=10)
 
         self.intestazione = ctk.CTkLabel(self.navbar, text="WhaFeR", font=ctk.CTkFont(size=20, weight="bold"), width=200, pady=30)
-        self.pulsanteRiepilogo = ctk.CTkButton(self.navbar, text="Riepilogo", command=self.mostra_vista_riepilogo, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
+        self.pulsanteRiepilogo = ctk.CTkButton(self.navbar, text="Riepilogo", command=self.mostra_vista_riepilogo, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20, text_color=("white","black"))
         self.pulsanteGruppo = ctk.CTkButton(self.navbar, text="Gruppi", command=self.mostra_vista_gruppi, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
         self.pulsanteConversazioni = ctk.CTkButton(self.navbar, text="Conversazioni", command=self.mostra_vista_conversazioni, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)        
         self.pulsanteContatto = ctk.CTkButton(self.navbar, text="Contatti", command=self.mostra_vista_contatti, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
