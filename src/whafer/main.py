@@ -861,7 +861,7 @@ class Applicazione(ctk.CTkFrame):
         self.navbar.pack(side="left", fill="both", ipadx=10)
 
         self.intestazione = ctk.CTkLabel(self.navbar, text="WhaFeR", font=ctk.CTkFont(size=20, weight="bold"), width=200, pady=30)
-        self.pulsanteRiepilogo = ctk.CTkButton(self.navbar, text="Riepilogo", command=self.mostra_vista_riepilogo, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20, text_color=("white","black"))
+        self.pulsanteRiepilogo = ctk.CTkButton(self.navbar, text="Riepilogo", command=self.mostra_vista_riepilogo, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20, text_color=("darkgrey","lightgrey"))
         self.pulsanteGruppo = ctk.CTkButton(self.navbar, text="Gruppi", command=self.mostra_vista_gruppi, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
         self.pulsanteConversazioni = ctk.CTkButton(self.navbar, text="Conversazioni", command=self.mostra_vista_conversazioni, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)        
         self.pulsanteContatto = ctk.CTkButton(self.navbar, text="Contatti", command=self.mostra_vista_contatti, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
