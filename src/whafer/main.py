@@ -596,7 +596,7 @@ class ContattoView(BaseView):
         gruppoImg = ctk.CTkImage(genericUserImg, size=(100,100))
         self.intestazione = ctk.CTkLabel(self, text="Dettagli contatto: "+contatto.nome, font=ctk.CTkFont(size=25, weight="bold"))
 
-        self.numeroTelefonico = ctk.CTkLabel(self, text=f"Numero telefonico: +{str(contatto.numeroTelefonico)}", justify="left")
+        self.numeroTelefonico = ctk.CTkLabel(self, text=f"Numero telefonico: {str(contatto.numeroTelefonico)}", justify="left")
         self.immagineProfilo = ctk.CTkLabel(self, text="Immagine profilo:\n", image=gruppoImg, compound="bottom", justify="left")
         self.intestazione.pack(anchor="w", padx=20, pady=20)
         self.numeroTelefonico.pack(anchor="w", padx=20)
