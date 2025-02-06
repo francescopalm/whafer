@@ -13,6 +13,7 @@ dependencies = [
     "pandastable",
     "SQLAlchemy",
     "wa-crypt-tools",
+    "reportlab",
     "rfc3161ng"
 ]
 
