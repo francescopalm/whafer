@@ -813,6 +813,7 @@ class MediaView(BaseView):
             proc1.terminate()
             print(int(out.decode("utf-8")))
             percorso = Path(self.progetto.percorso / "media")
+            percorso.replace(" ", "\\ ")
             if(int(out.decode("utf-8")) <= 30):
                 proc1 = subprocess.Popen('adb pull -a /sdcard/WhatsApp/Media/. '+str(percorso))
                 proc1.wait()
