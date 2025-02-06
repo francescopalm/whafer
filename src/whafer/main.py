@@ -812,11 +812,12 @@ class MediaView(BaseView):
             out, err = proc1.communicate(b'getprop ro.build.version.sdk\nexit') # Controllo API level Android
             proc1.terminate()
             print(int(out.decode("utf-8")))
+            percorso = Path(self.progetto.percorso / "media")
             if(int(out.decode("utf-8")) <= 30):
-                proc1 = subprocess.Popen('adb pull -a /sdcard/WhatsApp/Media/. '+str(self.progetto.percorso / "media"))
+                proc1 = subprocess.Popen('adb pull -a /sdcard/WhatsApp/Media/. '+str(percorso))
                 proc1.wait()
             else:
-                proc1 = subprocess.Popen('adb pull -a /sdcard/Android/media/com.whatsapp/WhatsApp/Media/. '+str(self.progetto.percorso / "media"))
+                proc1 = subprocess.Popen('adb pull -a /sdcard/Android/media/com.whatsapp/WhatsApp/Media/. '+str(percorso))
                 proc1.wait()
             proc1.terminate()
             self.apriMedia.configure(state="normal", fg_color="#1F6AA5")
