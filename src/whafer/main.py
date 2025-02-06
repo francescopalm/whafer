@@ -861,12 +861,12 @@ class Applicazione(ctk.CTkFrame):
         self.navbar.pack(side="left", fill="both", ipadx=10)
 
         self.intestazione = ctk.CTkLabel(self.navbar, text="WhaFeR", font=ctk.CTkFont(size=20, weight="bold"), width=200, pady=30)
-        self.pulsanteRiepilogo = ctk.CTkButton(self.navbar, text="Riepilogo", command=self.mostra_vista_riepilogo, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20, text_color=("darkgrey","lightgrey"))
-        self.pulsanteGruppo = ctk.CTkButton(self.navbar, text="Gruppi", command=self.mostra_vista_gruppi, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
-        self.pulsanteConversazioni = ctk.CTkButton(self.navbar, text="Conversazioni", command=self.mostra_vista_conversazioni, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)        
-        self.pulsanteContatto = ctk.CTkButton(self.navbar, text="Contatti", command=self.mostra_vista_contatti, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
-        self.pulsanteMedia = ctk.CTkButton(self.navbar, text="Media", command=self.mostra_vista_media, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
-        self.pulsanteContenuti = ctk.CTkButton(self.navbar, text="Analisi tabelle DB", command=self.mostra_vista_contenuti, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
+        self.pulsanteRiepilogo = ctk.CTkButton(self.navbar, text="Riepilogo", command=self.mostra_vista_riepilogo, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20, text_color=("black","lightgrey"))
+        self.pulsanteGruppo = ctk.CTkButton(self.navbar, text="Gruppi", command=self.mostra_vista_gruppi, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20, text_color=("black","lightgrey"))
+        self.pulsanteConversazioni = ctk.CTkButton(self.navbar, text="Conversazioni", command=self.mostra_vista_conversazioni, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20, text_color=("black","lightgrey"))    
+        self.pulsanteContatto = ctk.CTkButton(self.navbar, text="Contatti", command=self.mostra_vista_contatti, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20, text_color=("black","lightgrey"))
+        self.pulsanteMedia = ctk.CTkButton(self.navbar, text="Media", command=self.mostra_vista_media, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20, text_color=("black","lightgrey"))
+        self.pulsanteContenuti = ctk.CTkButton(self.navbar, text="Analisi tabelle DB", command=self.mostra_vista_contenuti, anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20, text_color=("black","lightgrey"))
         self.pulsanteImpostazioni = ctk.CTkButton(self.navbar, state="disabled", text="Impostazioni", anchor="w", fg_color="transparent", corner_radius=0, border_spacing=20)
 
         self.vista = BenvenutoView(self)
@@ -1157,7 +1157,7 @@ def main():
     # Controllo delle dipendenze
     try:
         check = subprocess.Popen('adb --version', stdin = subprocess.PIPE, stdout=subprocess.PIPE, stderr=None)
-        app.geometry(f"{1100}x{580}")
+        app.geometry(f"{1150}x{580}")
         app.main = Introduzione(app).pack(fill="both", expand=True)
     except:
         print("Errore: adb non trovato. Assicurati che sia installato e inserito nelle'variabili d'ambiente.")
